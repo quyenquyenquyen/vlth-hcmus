@@ -16,14 +16,14 @@ const signToken = userID => {
 }
 
 userRouter.post('/register', (req, res) => {
-    const { username, password, role, name } = req.body;
+    const { username, password, role } = req.body;
     User.findOne({ username }, (err, user) => {
         if (err)
             res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         if (user)
             res.status(400).json({ message: { msgBody: "Username is already taken", msgError: true } });
         else {
-            const newUser = new User({ username, password, role, name });
+            const newUser = new User({ username, password, role });
             newUser.save(err => {
                 if (err)
                     res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
@@ -38,28 +38,14 @@ userRouter.post('/register', (req, res) => {
 
 userRouter.post('/login', passport.authenticate('local', { session: false }), (req, res) => {
     if (req.isAuthenticated()) {
-        const { _id, username, role, name } = req.user;
+        const { _id, username, role } = req.user;
         const token = signToken(_id);
+        console.log('TOKEN', req.user.password)
         res.cookie('access_token', token, { httpOnly: true, sameSite: true });
-        res.status(200).json({ isAuthenticated: true, user: { username, role, name } });
+        res.status(200).json({ isAuthenticated: true, user: { username, role } });
     }
 });
 
-userRouter.get('/', passport.authenticate('jwt', { session: false }), (req, res) => {
-    User.find().exec((err, docs) => {
-        if (err)
-            return res.status(400).send(err);
-        res.send(docs)
-    });
-})
-
-userRouter.get('/finduser/:username', passport.authenticate('jwt', { session: false }), (req, res) => {
-    User.find({username:req.params.username}).exec((err, docs) => {
-        if (err)
-            console.log("err")
-        res.send(docs)
-    });
-})
 userRouter.put('/reset', passport.authenticate('jwt', { session: false }), async (req, res) => {
 
     try {
@@ -86,8 +72,7 @@ userRouter.put('/reset', passport.authenticate('jwt', { session: false }), async
 
 userRouter.get('/logout', passport.authenticate('jwt', { session: false }), (req, res) => {
     res.clearCookie('access_token');
-    res.json({ user: { username: "", role: "", name: "" }, success: true });
-
+    res.json({ user: { username: "", role: "" }, success: true });
 });
 
 userRouter.post('/todo', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -109,8 +94,6 @@ userRouter.post('/todo', passport.authenticate('jwt', { session: false }), (req,
 
 
 
-
-
 userRouter.get('/arr', passport.authenticate('jwt', { session: false }), (req, res) => {
     User.findById({ _id: req.user._id }).exec((err, document) => {
         if (err)
@@ -122,18 +105,16 @@ userRouter.get('/arr', passport.authenticate('jwt', { session: false }), (req, r
 });
 
 
+userRouter.put('/putarr/',passport.authenticate('jwt', { session: false }), (req, res) => {
 
-userRouter.put('/putarr/', passport.authenticate('jwt', { session: false }), (req, res) => {
-
-    const todo = new Todo({
-        name: req.body.name,
-        fileId: req.body.fileId,
-        subjectName: req.body.subjectName,
-        week:req.body.week
+    const todo=new Todo({
+        name:req.body.filename,
+        fileId:req.body.fileId,
+        subjectName:req.body.subjectName
     })
+   
 
-
-    User.findByIdAndUpdate(req.user._id, { $push: { arr: todo } }, { new: true }, (err, docs) => {
+    User.findByIdAndUpdate(req.user._id, { $push: {arr:todo} },{ new: true }, (err, docs) => {
         if (!err) {
             res.send(docs)
         } else {
@@ -142,66 +123,35 @@ userRouter.put('/putarr/', passport.authenticate('jwt', { session: false }), (re
     })
 })
 
-userRouter.put('/resetarrnopush/:subjectName/:week', passport.authenticate('jwt', { session: false }), (req, res) => {
+userRouter.put('/resetarr/:subjectName',passport.authenticate('jwt', { session: false }), (req, res) => {
 
-    const subjectName = req.params.subjectName
-    const week=req.params.week
+    const subjectName=req.params.subjectName
 
-    User.findByIdAndUpdate(req.user._id, { $pull: { arr: { subjectName,week } } }, { new: true }, (err, result) => {
+    User.findByIdAndUpdate(req.user._id, { $pull: { arr: {subjectName} } }, { new: true }, (err, docs) => {
         if (!err) {
-            res.send(result)
-            // console.log('reset arr success')
+            // res.send(docs)
+            console.log('put subject success')
         } else {
             console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
         }
     })
 
-})
-
-userRouter.put('/resetarr/:subjectName/:week', passport.authenticate('jwt', { session: false }), (req, res) => {
-
-    const subjectName = req.params.subjectName
-    const week=req.params.week
-
-    User.findByIdAndUpdate(req.user._id, { $pull: { arr: { subjectName,week } } }, { new: true }, (err, result) => {
-        if (!err) {
-            res.send(result)
-            // console.log('reset arr success')
-        } else {
-            console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
-        }
+    const todo=new Todo({
+        name:req.body.name,
+        fileId:req.body.fileId,
+        subjectName:req.body.subjectName
     })
+   
 
-    const todo = new Todo({
-        name: req.body.name,
-        fileId: req.body.fileId,
-        subjectName: req.body.subjectName,
-        week:week
-    })
-
-
-    User.findByIdAndUpdate(req.user._id, { $push: { arr: todo } }, { new: true }, (err, docs) => {
+    User.findByIdAndUpdate(req.user._id, { $push: {arr:todo} },{ new: true }, (err, docs) => {
         if (!err) {
-            console.log('put arr ')
+            res.send(docs)
         } else {
             console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
         }
     })
 })
 
-userRouter.delete('/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
-
-    const id = req.params.id
-    User.findByIdAndRemove({ _id: id }, (err, result) => {
-        if (!err) {
-            res.send(result)
-        } else {
-            console.log('Error while deleting a record: ' + JSON.stringify(err, undefined, 2));
-        }
-    })
-
-
-})
 
 
 
@@ -214,8 +164,12 @@ userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req,
 });
 
 userRouter.get('/authenticated', passport.authenticate('jwt', { session: false }), (req, res) => {
-    const { username, role, password, name } = req.user;
-    res.status(200).json({ isAuthenticated: true, user: { username, role, password, name } });
+    const { username, role,password } = req.user;
+    res.status(200).json({ isAuthenticated: true, user: { username, role,password } });
 });
+
+
+
+
 
 module.exports = userRouter;

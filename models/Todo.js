@@ -22,21 +22,6 @@ const TodoSchema = new mongoose.Schema({
     },
     subjectName:{
         type:String
-    },
-    week:{
-        type:String
-    },
-    exerciseName:{
-        type:String
-    },
-    description:{
-        type:String
-    },
-    username:{
-        type:String
-    },
-    subId:{
-        type:String
     }
 });
 

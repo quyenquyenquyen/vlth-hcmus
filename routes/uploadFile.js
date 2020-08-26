@@ -20,18 +20,16 @@ const app = express.Router();
 //Middleware
 app.use(bodyParser.json())
 app.use(methodOverride('_method'))
-app.use(cors())
+app.use(cors({ origin: 'http://localhost:3000' }))
 
 
 
 //Mongo URI
 
-// const mongoURI = 'mongodb://localhost:27017/ExamDb'
-const mongoURI = 'mongodb+srv://quyenuser:quyen1812@cluster0-dewly.mongodb.net/test?retryWrites=true&w=majority'
+const mongoURI = 'mongodb://localhost:27017/ExamDb'
 const conn = mongoose.createConnection(mongoURI, {
     useUnifiedTopology: true,
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+    useNewUrlParser: true
 
 });
 
@@ -72,121 +70,59 @@ const upload = multer({
 
 //@route POST/
 //@desc Uploads file to DB
-app.post('/upload/:subjectName/:week', upload.single('file'), passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post('/upload/:subjectName', upload.single('file'), passport.authenticate('jwt', { session: false }), (req, res) => {
 
-    const todo = new Todo({ username:req.user.name,name: req.file.filename, contentType: req.file.contentType, fileId: req.file.id, user: req.user.username, timestamp: moment().format("YYYY-MM-DD HH:mm:ss"), week: req.params.week,point:0 });
+    const todo = new Todo({ name: req.file.filename, contentType: req.file.contentType, fileId: req.file.id, user: req.user.username, timestamp: moment().format("YYYY-MM-DD") });
 
     const subjectName = req.params.subjectName
-    const week = req.params.week
     // req.user.save();
-    // res.send([{ filename: req.file.filename, fileId: req.file.id, subjectName: req.params.subjectName }])
+    res.send([{ filename: req.file.filename, fileId: req.file.id, subjectName: req.params.subjectName }])
 
     Subject.updateOne({ subjectName: req.params.subjectName }, {
         $push: { subjectArr: todo }
     })
         .then((result, docs) => {
-            res.send(result)
+            // res.send(result)
 
         })
         .catch(err => res.status(400).json({ err: err.message }))
 
 
-    User.findByIdAndUpdate(req.user._id, { $pull: { arr: { subjectName,week } } }, { new: true }, (err, docs) => {
+    User.findByIdAndUpdate(req.user._id, { $pull: { arr: { subjectName } } }, { new: true }, (err, docs) => {
         if (!err) {
             // res.send(docs)
-            console.log('put subject when post file success')
-            const putRecord = {
-                name: req.file.filename,
-                fileId: req.file.id,
-                subjectName: subjectName,
-                week:week
-            }
-            User.findByIdAndUpdate(req.user._id, { $push: { arr: putRecord } }, { new: true }, (err, docs) => {
-                if (!err) {
-                    // res.send(docs)
-                } else {
-                    console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
-                }
-            })
-        } else {
-            console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
-        }
-    })
-
-    
-
-})
-
-
-app.put('/upload/edit/:id/:week', upload.single('file'), passport.authenticate('jwt', { session: false }), (req, res) => {
-
-    const week = req.params.week
-    const todo = new Todo({ name: req.file.filename, contentType: req.file.contentType, fileId: req.file.id, user: req.user.username, timestamp: moment().format("YYYY-MM-DD") });
-    Subject.updateOne({ _id: req.params.id }, { $pull: { exerciseArr: { week } } }, { new: true }, (err, result) => {
-        if (!err) {
-            // res.send(result)
             console.log('put subject success')
         } else {
             console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
         }
     })
 
-   
-    const variable = {
+    const putRecord = {
         name: req.file.filename,
-        contentType: req.file.contentType,
         fileId: req.file.id,
-        user: req.user.username,
-        timestamp: moment().format("YYYY-MM-DD"),
-        week: req.body.week,
-        description:req.body.description,
-        exerciseName:req.body.exerciseName,
-        deadline:req.body.deadline
+        subjectName: subjectName
     }
 
-    // req.user.save();
-    res.send([{ filename: req.file.filename, fileId: req.file.id, subjectName: req.params.subjectName }])
 
-    Subject.updateOne({ _id: req.params.id }, {
-        $push: { exerciseArr: variable }
+    User.findByIdAndUpdate(req.user._id, { $push: { arr: putRecord } }, { new: true }, (err, docs) => {
+        if (!err) {
+            // res.send(docs)
+        } else {
+            console.log('Error while updating a record: ' + JSON.stringify(err, undefined, 2));
+        }
     })
-        .then((result, docs) => {
-            // res.send(result)
 
-        })
-        .catch(err => res.status(400).json({ err: err.message }))
+    // todo.save(err => {
+    //     if (err)
+    //         res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+    //     else {
+    //         // req.user.todos.push(todo);
+    //         req.user.arr.push(todo);
+    //         req.user.save();
+    //     }
+    // })
 
 })
-app.post('/upload/:id', upload.single('file'), passport.authenticate('jwt', { session: false }), (req, res) => {
-
-    const variable = {
-        name: req.file.filename,
-        contentType: req.file.contentType,
-        fileId: req.file.id,
-        user: req.user.username,
-        timestamp: moment().format("YYYY-MM-DD"),
-        week: req.body.week,
-        description:req.body.description,
-        exerciseName:req.body.exerciseName,
-        deadline:req.body.deadline
-    }
-
-    // req.user.save();
-    res.send([{ filename: req.file.filename, fileId: req.file.id, subjectName: req.params.subjectName }])
-
-    Subject.updateOne({ _id: req.params.id }, {
-        $push: { exerciseArr: variable }
-    })
-        .then((result, docs) => {
-            // res.send(result)
-
-        })
-        .catch(err => res.status(400).json({ err: err.message }))
-
-})
-
-
-
 
 app.put('/subject/:md5', passport.authenticate('jwt', { session: false }), (req, res) => {
 
@@ -254,7 +190,6 @@ app.get('/files/:filename', (req, res) => {
         return res.json(file);
     })
 })
-
 
 
 //@route GET /image/:filename
@@ -348,27 +283,6 @@ app.get('/excel/:filename', (req, res) => {
     })
 })
 
-app.get('/pdf/:filename', (req, res) => {
-    gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
-        if (!file || file.length === 0) {
-            return res.status(404).json({
-                err: 'No file exist'
-            })
-        }
-        //Check if image
-        if (file.contentType === 'application/pdf') {
-            //Read output to browser
-            const readstream = gfs.createReadStream(file.filename)
-            readstream.pipe(res)
-            console.log(res)
-        } else {
-            res.status(404).json({
-                err: 'Not an file'
-            })
-        }
-    })
-})
-
 //@route DELETE /files/:id
 //@desc Delete file
 app.delete('/files/:fileId/:subjectId', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -383,27 +297,20 @@ app.delete('/files/:fileId/:subjectId', passport.authenticate('jwt', { session: 
             return res.status(400).json({ err: err.message })
         }
 
-        User.updateOne({ _id: req.user._id }, { $pull: { result: { fileId } } })
-            .then(res => {
-                
+        User.updateOne({ _id: req.user._id }, { $pull: { arr: { fileId } } })
+            .then(result => {
+                // res.redirect('/admin')
+                res.send({ result: result })
             })
 
         Subject.updateOne({ _id: subjectId }, { $pull: { subjectArr: { fileId } } })
             .then(result => {
-                res.redirect('/admin')
+                // res.redirect('/admin')
+                res.send({ result1: result })
+
+
             })
-
-    })
-})
-
-app.delete('/', passport.authenticate('jwt', { session: false }), (req, res) => {
-
-
-    gfs.remove({root: 'uploads' }, (err, gridStore) => {
-        if (err) {
-            console.log(err);
-            return res.status(400).json({ err: err.message })
-        }
+        res.redirect(`http://localhost:3000/subject/detail/${subjectId}`)
 
     })
 })

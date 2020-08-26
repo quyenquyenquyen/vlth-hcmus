@@ -1,102 +1,71 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {useState,useRef,useEffect} from 'react';
 import AuthService from '../Services/AuthService';
 import Message from '../Components/Message';
-import { Paper } from '@material-ui/core';
 
-const Register = props => {
-    const [user, setUser] = useState({ username: "", password: "", role: "", name: "" });
-    const [message, setMessage] = useState(null);
+const Register = props=>{
+    const [user,setUser] = useState({username: "", password : "", role : ""});
+    const [message,setMessage] = useState(null);
     let timerID = useRef(null);
 
-    useEffect(() => {
-        return () => {
+    useEffect(()=>{
+        return ()=>{
             clearTimeout(timerID);
         }
-    }, []);
+    },[]);
 
-    const onChange = e => {
-        setUser({ ...user, [e.target.name]: e.target.value });
+    const onChange = e =>{
+        setUser({...user,[e.target.name] : e.target.value});
     }
 
-    const resetForm = () => {
-        setUser({ username: "", password: "", role: "", name: "" });
+    const resetForm = ()=>{
+        setUser({username : "", password : "",role : ""});
     }
 
-    const onSubmit = e => {
+    const onSubmit = e =>{
         e.preventDefault();
-        if (user.role === 'admin' || user.role === 'user') {
-            AuthService.register(user).then(data => {
-                const { message } = data;
-                setMessage(message);
-                resetForm();
-                if (!message.msgError) {
-                    timerID = setTimeout(() => {
-                        props.history.push('/login');
-                    }, 2000)
-                }
-            });
-        } else {
-            alert("Role Wrong,please just admin or user")
-
-        }
+        AuthService.register(user).then(data=>{
+            const { message } = data;
+            setMessage(message);
+            resetForm();
+            if(!message.msgError){
+                timerID = setTimeout(()=>{
+                    props.history.push('/login');
+                },2000)
+            }
+        });
     }
 
 
 
-    return (
+    return(
         <div>
-            <form onSubmit={onSubmit} style={{ padding: "3% 5%", width: "50%", margin: "0 auto" }}>
-                <Paper elevation={6} style={{ margin: "10px", padding: "10px" }}>
-                    <div>
-                        <div className="text-center">
-                            <img style={{ width: "100px", height: "auto" }} src="http://vlth-hcmus.herokuapp.com/up/image/12472320_1726672837602082_5692324023661199345_n.jpg" />
-                            <h5 style={{ color: "#2a2a72" }}>Bộ môn Vật lý tin học</h5>
-                            <h3>Create new user</h3>
-                        </div>
-
-                        <label ><h6 style={{ fontWeight: "bold" }}><i className="fa fa-user" />&nbsp;MSSV:</h6> </label>
-                        <input type="text"
-                            style={{ marginBottom: "1em" }}
-                            name="username"
-                            onChange={onChange}
-                            className="form-control"
-                            placeholder="Enter Username"
-                            required />
-
-                        <label><h6 style={{ fontWeight: "bold" }}><i className="fa fa-users" />&nbsp;Name:</h6> </label>
-                        <input type="text"
-                            style={{ marginBottom: "1em" }}
-                            name="name"
-                            value={user.name}
-                            onChange={onChange}
-                            className="form-control"
-                            placeholder="Enter Name"
-                            required />
-
-                        <label><h6 style={{ fontWeight: "bold" }}><i className="fa fa-key" />&nbsp;Password: </h6></label>
-                        <input type="password"
-                            style={{ marginBottom: "1em" }}
-                            name="password"
-                            value={user.password}
-                            onChange={onChange}
-                            className="form-control"
-                            placeholder="Enter Password"
-                            required />
-
-                        <label><h6 style={{ fontWeight: "bold" }}><i className="fa fa-tag" />&nbsp;Role:</h6> </label>
-                        <input type="text"
-                            style={{ marginBottom: "1em" }}
-                            name="role"
-                            value={user.role}
-                            onChange={onChange}
-                            className="form-control"
-                            placeholder="Enter role (admin/user)"
-                            required />
-                        <button style={{ width: "50%", margin: "0 25%" }} className="btn btn-lg btn-primary btn-block" type="submit">Create </button>
-                    </div>
-                </Paper>
+            <form onSubmit={onSubmit}>
+                <h3>Please Register</h3>
+                <label htmlFor="username" className="sr-only">Username: </label>
+                <input type="text" 
+                       name="username" 
+                       value={user.username}
+                       onChange={onChange} 
+                       className="form-control" 
+                       placeholder="Enter Username"/>
+                <label htmlFor="password" className="sr-only">Password: </label>
+                <input type="password" 
+                       name="password"
+                       value={user.password} 
+                       onChange={onChange} 
+                       className="form-control" 
+                       placeholder="Enter Password"/>
+                <label htmlFor="role" className="sr-only">Role: </label>
+                <input type="text" 
+                       name="role"
+                       value={user.role}  
+                       onChange={onChange} 
+                       className="form-control" 
+                       placeholder="Enter role (admin/user)"/>
+                <button className="btn btn-lg btn-primary btn-block" 
+                        type="submit">Register</button>
             </form>
-            {message ? <Message message={message} /> : null}
+            {message ? <Message message={message}/> : null}
         </div>
     )
 }
